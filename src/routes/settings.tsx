@@ -57,7 +57,7 @@ function SettingsPage() {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
-    const update: Record<string, string> = { full_name: fullName };
+    const update: { full_name: string; openrouter_api_key?: string } = { full_name: fullName };
     if (apiKey.trim()) update.openrouter_api_key = apiKey.trim();
     const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
     setSaving(false);
