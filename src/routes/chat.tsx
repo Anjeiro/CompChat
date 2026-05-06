@@ -425,6 +425,18 @@ function ChatPage() {
           </div>
         </form>
       </main>
+
+      {user && (
+        <PersonalizeDialog
+          open={personalizeOpen}
+          onOpenChange={(o) => {
+            setPersonalizeOpen(o);
+            if (!o) setPendingPrompt(null);
+          }}
+          userId={user.id}
+          onConfirm={handlePersonalizeConfirm}
+        />
+      )}
     </div>
   );
 }
