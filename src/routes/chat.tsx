@@ -14,6 +14,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { AVAILABLE_MODELS, ModelId } from "@/lib/models";
+import { PersonalizeDialog, Personalization } from "@/components/PersonalizeDialog";
 import {
   Plus,
   Send,
@@ -61,6 +62,8 @@ function ChatPage() {
   const [model, setModel] = useState<ModelId>("openrouter/auto");
   const [profileName, setProfileName] = useState("");
   const [hasKey, setHasKey] = useState(false);
+  const [personalizeOpen, setPersonalizeOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
