@@ -59,7 +59,7 @@ function LandingPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-lg font-semibold">
             <Sparkles className="h-5 w-5" />
-            <span>Keychat</span>
+            <span>CompChat</span>
           </div>
         </div>
         <div className="relative z-10 space-y-6 max-w-lg">
@@ -72,7 +72,7 @@ function LandingPage() {
           <div className="grid gap-3 pt-4">
             <Feature icon={<Sparkles className="h-4 w-4" />} text="Personalize how the AI responds" />
             <Feature icon={<KeyRound className="h-4 w-4" />} text="Bring your own OpenRouter API key" />
-            <Feature icon={<Zap className="h-4 w-4" />} text="Streaming responses from Gemini, Claude & more" />
+            <Feature icon={<Zap className="h-4 w-4" />} text="Pick various free LLM models with 50 messages a day" />
             <Feature icon={<Lock className="h-4 w-4" />} text="Save & reuse personality presets" />
           </div>
         </div>
