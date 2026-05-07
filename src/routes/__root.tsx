@@ -31,7 +31,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Keychat — Chat with any LLM using your OpenRouter key" },
+      { title: "CompChat — Chat with any LLM using your OpenRouter key" },
       {
         name: "description",
         content:
