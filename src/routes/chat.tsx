@@ -50,7 +50,7 @@ export const Route = createFileRoute("/chat")({
   component: ChatPage,
   head: () => ({
     meta: [
-      { title: "Chat — Keychat" },
+      { title: "Chat — CompChat" },
       { name: "description", content: "Your private AI chat dashboard." },
     ],
   }),
@@ -376,7 +376,7 @@ function ChatPage() {
         <div className="p-4 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-2 font-semibold text-sidebar-foreground">
             <Sparkles className="h-5 w-5 text-primary" />
-            Keychat
+            CompChat
           </Link>
         </div>
         <div className="p-3">
@@ -441,7 +441,7 @@ function ChatPage() {
         <header className="border-b px-4 py-3 flex items-center justify-between gap-3">
           <div className="md:hidden">
             <Link to="/" className="font-semibold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" /> Keychat
+              <Sparkles className="h-4 w-4 text-primary" /> CompChat
             </Link>
           </div>
           <div className="flex-1 flex items-center justify-end md:justify-start">
@@ -473,10 +473,10 @@ function ChatPage() {
                   <Sparkles className="h-8 w-8 text-primary-foreground" />
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight">
-                  Welcome{profileName ? `, ${profileName.split(" ")[0]}` : ""}.
+                  Welcome back, {profileName ? `, ${profileName.split(" ")[0]}` : ""}!.
                 </h2>
                 <p className="text-muted-foreground mt-2 max-w-md">
-                  Pick a model above and start a conversation. Your messages are streamed in real time.
+                  Need a friend? Pick a model above and start a conversation.
                 </p>
               </div>
             )}
