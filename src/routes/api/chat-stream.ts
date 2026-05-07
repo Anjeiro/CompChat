@@ -5,6 +5,7 @@ interface RequestBody {
   chatId: string;
   model: string;
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
+  parentMessageId?: string | null;
 }
 
 export const Route = createFileRoute("/api/chat-stream")({
