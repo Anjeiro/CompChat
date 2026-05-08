@@ -36,6 +36,9 @@ interface Chat {
   id: string;
   title: string;
   updated_at: string;
+  custom_model_name?: string | null;
+  last_message?: string | null;
+  last_message_at?: string | null;
 }
 
 interface Message {
