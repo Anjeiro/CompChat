@@ -239,14 +239,14 @@ function ChatPage() {
         custom_background: p.custom_background,
         custom_tone: p.custom_tone,
       })
-      .select("id, title, updated_at")
+      .select("id, title, updated_at, custom_model_name")
       .single();
     if (error || !newChat) {
       toast.error(error?.message ?? "Could not create chat");
       return;
     }
     setActiveChatId(newChat.id);
-    setChats((prev) => [newChat, ...prev]);
+    setChats((prev) => [{ ...newChat, last_message: null, last_message_at: newChat.updated_at }, ...prev]);
     await runSend(prompt, newChat.id, null);
   };
 
