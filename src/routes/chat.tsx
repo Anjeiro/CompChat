@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { AVAILABLE_MODELS, ModelId } from "@/lib/models";
 import { PersonalizeDialog, Personalization } from "@/components/PersonalizeDialog";
@@ -35,6 +36,9 @@ interface Chat {
   id: string;
   title: string;
   updated_at: string;
+  custom_model_name?: string | null;
+  last_message?: string | null;
+  last_message_at?: string | null;
 }
 
 interface Message {
@@ -86,21 +90,53 @@ function ChatPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data: profile }, { data: chatList }] = await Promise.all([
-        supabase.from("profiles").select("full_name, openrouter_api_key").eq("id", user.id).maybeSingle(),
-        supabase
-          .from("chats")
-          .select("id, title, updated_at")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false }),
-      ]);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, openrouter_api_key")
+        .eq("id", user.id)
+        .maybeSingle();
       if (profile) {
         setProfileName(profile.full_name ?? "");
         setHasKey(!!profile.openrouter_api_key);
       }
-      if (chatList) setChats(chatList);
+      await loadChats();
     })();
   }, [user]);
+
+  const loadChats = async () => {
+    if (!user) return;
+    const { data: chatList } = await supabase
+      .from("chats")
+      .select("id, title, updated_at, custom_model_name")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false });
+    if (!chatList) return;
+    const ids = chatList.map((c) => c.id);
+    let lastByChat: Record<string, { content: string; created_at: string }> = {};
+    if (ids.length) {
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("chat_id, content, created_at")
+        .in("chat_id", ids)
+        .order("created_at", { ascending: false });
+      if (msgs) {
+        for (const m of msgs) {
+          if (!lastByChat[m.chat_id]) {
+            lastByChat[m.chat_id] = { content: m.content, created_at: m.created_at };
+          }
+        }
+      }
+    }
+    const enriched: Chat[] = chatList.map((c) => ({
+      ...c,
+      last_message: lastByChat[c.id]?.content ?? null,
+      last_message_at: lastByChat[c.id]?.created_at ?? c.updated_at,
+    }));
+    enriched.sort((a, b) =>
+      (b.last_message_at ?? b.updated_at).localeCompare(a.last_message_at ?? a.updated_at),
+    );
+    setChats(enriched);
+  };
 
   useEffect(() => {
     if (!activeChatId) {
@@ -147,13 +183,7 @@ function ChatPage() {
   }, [activePath, streamedText]);
 
   const refreshChats = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("chats")
-      .select("id, title, updated_at")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false });
-    if (data) setChats(data);
+    await loadChats();
   };
 
   const startNewChat = () => {
@@ -209,14 +239,14 @@ function ChatPage() {
         custom_background: p.custom_background,
         custom_tone: p.custom_tone,
       })
-      .select("id, title, updated_at")
+      .select("id, title, updated_at, custom_model_name")
       .single();
     if (error || !newChat) {
       toast.error(error?.message ?? "Could not create chat");
       return;
     }
     setActiveChatId(newChat.id);
-    setChats((prev) => [newChat, ...prev]);
+    setChats((prev) => [{ ...newChat, last_message: null, last_message_at: newChat.updated_at }, ...prev]);
     await runSend(prompt, newChat.id, null);
   };
 
@@ -385,34 +415,58 @@ function ChatPage() {
           </Button>
         </div>
         <ScrollArea className="flex-1 px-2">
-          <div className="space-y-1 pb-3">
+          <div className="space-y-0.5 pb-3">
             {chats.length === 0 && (
-              <p className="text-xs text-muted-foreground px-3 py-4 text-center">No chats yet</p>
-            )}
-            {chats.map((c) => (
-              <div
-                key={c.id}
-                className={`group flex items-center gap-2 rounded-md px-3 py-2 text-sm cursor-pointer transition-colors ${
-                  activeChatId === c.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "hover:bg-sidebar-accent/50 text-sidebar-foreground"
-                }`}
-                onClick={() => setActiveChatId(c.id)}
-              >
-                <MessageSquare className="h-4 w-4 shrink-0 opacity-60" />
-                <span className="flex-1 truncate">{c.title}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteChat(c.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Delete chat"
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                </button>
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <MessageSquare className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">No conversations yet</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Start a new chat to begin</p>
               </div>
-            ))}
+            )}
+            {chats.map((c) => {
+              const displayName = c.custom_model_name || c.title;
+              const isActive = activeChatId === c.id;
+              return (
+                <div
+                  key={c.id}
+                  className={`group flex items-start gap-3 rounded-lg px-2.5 py-2.5 cursor-pointer transition-colors ${
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "hover:bg-sidebar-accent/60 text-sidebar-foreground"
+                  }`}
+                  onClick={() => setActiveChatId(c.id)}
+                >
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarFallback className="bg-gradient-hero text-primary-foreground text-xs font-semibold">
+                      {getChatInitials(displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="font-semibold text-sm truncate">{displayName}</p>
+                      <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
+                        {formatChatTime(c.last_message_at ?? c.updated_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {c.last_message ? c.last_message.replace(/\s+/g, " ").trim() : "No messages yet"}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteChat(c.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        aria-label="Delete chat"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </ScrollArea>
         <div className="border-t border-sidebar-border p-3 space-y-1">
@@ -562,6 +616,36 @@ function ChatPage() {
 }
 
 // ---------- Helpers ----------
+
+function getChatInitials(name: string): string {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "?";
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function formatChatTime(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) {
+    return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diffDays < 7) {
+    return d.toLocaleDateString([], { weekday: "short" });
+  }
+  if (d.getFullYear() === now.getFullYear()) {
+    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+  return d.toLocaleDateString([], { year: "2-digit", month: "short", day: "numeric" });
+}
 
 function groupByParent(messages: Message[]): Record<string, Message[]> {
   const groups: Record<string, Message[]> = {};
