@@ -415,34 +415,58 @@ function ChatPage() {
           </Button>
         </div>
         <ScrollArea className="flex-1 px-2">
-          <div className="space-y-1 pb-3">
+          <div className="space-y-0.5 pb-3">
             {chats.length === 0 && (
-              <p className="text-xs text-muted-foreground px-3 py-4 text-center">No chats yet</p>
-            )}
-            {chats.map((c) => (
-              <div
-                key={c.id}
-                className={`group flex items-center gap-2 rounded-md px-3 py-2 text-sm cursor-pointer transition-colors ${
-                  activeChatId === c.id
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "hover:bg-sidebar-accent/50 text-sidebar-foreground"
-                }`}
-                onClick={() => setActiveChatId(c.id)}
-              >
-                <MessageSquare className="h-4 w-4 shrink-0 opacity-60" />
-                <span className="flex-1 truncate">{c.title}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteChat(c.id);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Delete chat"
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
-                </button>
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <MessageSquare className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">No conversations yet</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Start a new chat to begin</p>
               </div>
-            ))}
+            )}
+            {chats.map((c) => {
+              const displayName = c.custom_model_name || c.title;
+              const isActive = activeChatId === c.id;
+              return (
+                <div
+                  key={c.id}
+                  className={`group flex items-start gap-3 rounded-lg px-2.5 py-2.5 cursor-pointer transition-colors ${
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "hover:bg-sidebar-accent/60 text-sidebar-foreground"
+                  }`}
+                  onClick={() => setActiveChatId(c.id)}
+                >
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarFallback className="bg-gradient-hero text-primary-foreground text-xs font-semibold">
+                      {getChatInitials(displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="font-semibold text-sm truncate">{displayName}</p>
+                      <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
+                        {formatChatTime(c.last_message_at ?? c.updated_at)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {c.last_message ? c.last_message.replace(/\s+/g, " ").trim() : "No messages yet"}
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteChat(c.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        aria-label="Delete chat"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </ScrollArea>
         <div className="border-t border-sidebar-border p-3 space-y-1">
