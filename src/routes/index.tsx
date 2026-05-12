@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Sparkles, KeyRound, Lock, Zap } from "lucide-react";
+import { Sparkles, KeyRound, Lock, Zap, MessageSquareDiff } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -61,36 +61,10 @@ const handleGoogle = async () => {
   if (error) toast.error("Could not sign in with Google");
 };
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Hero */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 bg-gradient-hero text-primary-foreground overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <Sparkles className="h-5 w-5" />
-            <span>CompChat</span>
-          </div>
-        </div>
-        <div className="relative z-10 space-y-6 max-w-lg">
-          <h1 className="text-5xl font-bold leading-tight tracking-tight">
-            Build a chatbot with the personality you want.
-          </h1>
-          <p className="text-lg opacity-90">
-            Customize the name, personality, background, and tone of any LLM. Save your favorite personas and reuse them across chats.
-          </p>
-          <div className="grid gap-3 pt-4">
-            <Feature icon={<Sparkles className="h-4 w-4" />} text="Personalize how the AI responds" />
-            <Feature icon={<KeyRound className="h-4 w-4" />} text="Bring your own OpenRouter API key" />
-            <Feature icon={<Zap className="h-4 w-4" />} text="Pick various free LLM models with 50 messages a day" />
-            <Feature icon={<Lock className="h-4 w-4" />} text="Save & reuse personality presets" />
-          </div>
-        </div>
-        <div className="relative z-10 text-sm opacity-70">© {new Date().getFullYear()} CompChat</div>
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      {/* Login Card Only */}
+      <div className="w-full max-w-md p-6 sm:p-12">
 
-      {/* Login */}
-      <div className="flex items-center justify-center p-6 sm:p-12">
         <Card className="w-full max-w-md shadow-soft border-border/60">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl">Welcome back</CardTitle>
@@ -98,14 +72,14 @@ const handleGoogle = async () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <Button variant="outline" className="w-full" onClick={handleGoogle} type="button">
-              <GoogleIcon /> Continue with Google
+              <MessageSquareDiff className="mr-2 h-4 w-4" /> Continue with Google
             </Button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or with email</span>
+                <span className="bg-card px-2 text-muted-foreground">OR WITH EMAIL</span>
               </div>
             </div>
             <form onSubmit={handleLogin} className="space-y-4">
