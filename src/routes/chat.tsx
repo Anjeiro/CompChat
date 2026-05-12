@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { AVAILABLE_MODELS, ModelId } from "@/lib/models";
 import { PersonalizeDialog, Personalization } from "@/components/PersonalizeDialog";
 import { MarkdownMessage } from "@/components/MarkdownMessage";
+import { DeleteChatDialog } from "@/components/DeleteChatDialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Plus,
   Send,
@@ -30,6 +32,7 @@ import {
   ChevronRight,
   Check,
   X,
+  Menu,
 } from "lucide-react";
 
 interface Chat {
