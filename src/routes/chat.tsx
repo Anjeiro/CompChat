@@ -457,7 +457,7 @@ function ChatPage() {
                           e.stopPropagation();
                           deleteChat(c.id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        className="transition-opacity shrink-0"
                         aria-label="Delete chat"
                       >
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
