@@ -415,16 +415,21 @@ function ChatPage() {
   const confirmDeleteMessage = async () => {
     if (!pendingDeleteMsg) return;
     const ids = collectDescendantIds(pendingDeleteMsg.id);
+    const wasRoot = pendingDeleteMsg.parent_id === null;
     setPendingDeleteMsg(null);
     const { error } = await supabase.from("messages").delete().in("id", ids);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setAllMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+    const remaining = allMessages.filter((m) => !ids.includes(m.id));
+    setAllMessages(remaining);
     toast.success(
       ids.length > 1 ? `Deleted ${ids.length} messages` : "Message deleted",
     );
+    if (wasRoot || remaining.length === 0) {
+      startNewChat();
+    }
     refreshChats();
   };
 
