@@ -96,6 +96,7 @@ function ChatPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [pendingDelete, setPendingDelete] = useState<Chat | null>(null);
+  const [pendingDeleteMsg, setPendingDeleteMsg] = useState<Message | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
