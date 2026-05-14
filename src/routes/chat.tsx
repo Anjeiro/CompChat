@@ -34,7 +34,18 @@ import {
   Check,
   X,
   Menu,
+  RotateCcw,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Chat {
   id: string;
@@ -85,6 +96,7 @@ function ChatPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
   const [pendingDelete, setPendingDelete] = useState<Chat | null>(null);
+  const [pendingDeleteMsg, setPendingDeleteMsg] = useState<Message | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -387,6 +399,66 @@ function ChatPage() {
     });
   };
 
+  const collectDescendantIds = (rootId: string): string[] => {
+    const ids: string[] = [];
+    const stack = [rootId];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      ids.push(cur);
+      for (const m of allMessages) {
+        if (m.parent_id === cur) stack.push(m.id);
+      }
+    }
+    return ids;
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!pendingDeleteMsg) return;
+    const ids = collectDescendantIds(pendingDeleteMsg.id);
+    setPendingDeleteMsg(null);
+    const { error } = await supabase.from("messages").delete().in("id", ids);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setAllMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+    toast.success(
+      ids.length > 1 ? `Deleted ${ids.length} messages` : "Message deleted",
+    );
+    refreshChats();
+  };
+
+  const handleRetryAssistant = async (msg: Message) => {
+    if (streaming || !activeChatId) return;
+    if (!msg.parent_id) {
+      toast.error("Cannot retry — no parent message");
+      return;
+    }
+    const parentUser = allMessages.find((m) => m.id === msg.parent_id);
+    if (!parentUser) {
+      toast.error("Parent message not found");
+      return;
+    }
+    setStreaming(true);
+    setStreamedText("");
+    const history = buildAncestorHistory(allMessages, parentUser).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    await streamAssistant(activeChatId, history, parentUser.id);
+  };
+
+  const handleRetryFromUser = async (userMsg: Message) => {
+    if (streaming || !activeChatId) return;
+    setStreaming(true);
+    setStreamedText("");
+    const history = buildAncestorHistory(allMessages, userMsg).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    await streamAssistant(activeChatId, history, userMsg.id);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -598,6 +670,8 @@ function ChatPage() {
                     setEditingText("");
                   }}
                   onEditSave={() => handleEditSave(m)}
+                  onRetry={m.role === "assistant" ? () => handleRetryAssistant(m) : undefined}
+                  onDelete={m.role === "assistant" ? () => setPendingDeleteMsg(m) : undefined}
                   disabled={streaming}
                 />
               );
@@ -620,7 +694,19 @@ function ChatPage() {
           </div>
         </div>
 
-        <form onSubmit={sendMessage} className="border-t p-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const lastMsg = activePath[activePath.length - 1];
+            const isUserLast = lastMsg?.role === "user";
+            if (input.trim()) {
+              sendMessage();
+            } else if (isUserLast && !streaming) {
+              handleRetryFromUser(lastMsg);
+            }
+          }}
+          className="border-t p-4"
+        >
           <div className="max-w-3xl mx-auto flex gap-2 items-end">
             <Textarea
               value={input}
@@ -631,9 +717,23 @@ function ChatPage() {
               className="flex-1 min-h-[48px] max-h-48 resize-none"
               disabled={streaming}
             />
-            <Button type="submit" size="icon" className="h-12 w-12 shrink-0" disabled={streaming || !input.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
+            {(() => {
+              const lastMsg = activePath[activePath.length - 1];
+              const isUserLast = lastMsg?.role === "user";
+              const showRetry = !input.trim() && isUserLast;
+              const isDisabled = streaming || (!input.trim() && !isUserLast);
+              return (
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="h-12 w-12 shrink-0"
+                  disabled={isDisabled}
+                  aria-label={showRetry ? "Retry last response" : "Send message"}
+                >
+                  {showRetry ? <RotateCcw className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                </Button>
+              );
+            })()}
           </div>
         </form>
       </main>
@@ -649,6 +749,32 @@ function ChatPage() {
           onConfirm={handlePersonalizeConfirm}
         />
       )}
+
+      <AlertDialog
+        open={!!pendingDeleteMsg}
+        onOpenChange={(o) => {
+          if (!o) setPendingDeleteMsg(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this response and every message that follows it
+              in this branch. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteMessage}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <DeleteChatDialog
         open={!!pendingDelete}
@@ -744,6 +870,8 @@ interface BubbleProps {
   onEditChange?: (v: string) => void;
   onEditCancel?: () => void;
   onEditSave?: () => void;
+  onRetry?: () => void;
+  onDelete?: () => void;
   disabled?: boolean;
 }
 
@@ -760,6 +888,8 @@ function MessageBubble({
   onEditChange,
   onEditCancel,
   onEditSave,
+  onRetry,
+  onDelete,
   disabled,
 }: BubbleProps) {
   const isUser = message.role === "user";
@@ -842,12 +972,36 @@ function MessageBubble({
             <button
               type="button"
               onClick={onEditStart}
-              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1"
+              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1 shrink-0"
               aria-label="Edit message"
               disabled={disabled}
             >
               <Pencil className="h-3.5 w-3.5" />
               <span>Edit</span>
+            </button>
+          )}
+          {!isUser && onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Retry response"
+              disabled={disabled}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Retry</span>
+            </button>
+          )}
+          {!isUser && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-0.5 hover:text-destructive rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Delete message"
+              disabled={disabled}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
             </button>
           )}
         </div>
