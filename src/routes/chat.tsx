@@ -870,6 +870,8 @@ interface BubbleProps {
   onEditChange?: (v: string) => void;
   onEditCancel?: () => void;
   onEditSave?: () => void;
+  onRetry?: () => void;
+  onDelete?: () => void;
   disabled?: boolean;
 }
 
