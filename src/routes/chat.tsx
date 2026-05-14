@@ -399,6 +399,66 @@ function ChatPage() {
     });
   };
 
+  const collectDescendantIds = (rootId: string): string[] => {
+    const ids: string[] = [];
+    const stack = [rootId];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      ids.push(cur);
+      for (const m of allMessages) {
+        if (m.parent_id === cur) stack.push(m.id);
+      }
+    }
+    return ids;
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!pendingDeleteMsg) return;
+    const ids = collectDescendantIds(pendingDeleteMsg.id);
+    setPendingDeleteMsg(null);
+    const { error } = await supabase.from("messages").delete().in("id", ids);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setAllMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+    toast.success(
+      ids.length > 1 ? `Deleted ${ids.length} messages` : "Message deleted",
+    );
+    refreshChats();
+  };
+
+  const handleRetryAssistant = async (msg: Message) => {
+    if (streaming || !activeChatId) return;
+    if (!msg.parent_id) {
+      toast.error("Cannot retry — no parent message");
+      return;
+    }
+    const parentUser = allMessages.find((m) => m.id === msg.parent_id);
+    if (!parentUser) {
+      toast.error("Parent message not found");
+      return;
+    }
+    setStreaming(true);
+    setStreamedText("");
+    const history = buildAncestorHistory(allMessages, parentUser).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    await streamAssistant(activeChatId, history, parentUser.id);
+  };
+
+  const handleRetryFromUser = async (userMsg: Message) => {
+    if (streaming || !activeChatId) return;
+    setStreaming(true);
+    setStreamedText("");
+    const history = buildAncestorHistory(allMessages, userMsg).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+    await streamAssistant(activeChatId, history, userMsg.id);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
