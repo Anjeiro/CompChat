@@ -751,10 +751,9 @@ function ChatPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+            <AlertDialogTitle>Delete message and all subsequent replies?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this response and every message that follows it
-              in this branch. This action cannot be undone.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
