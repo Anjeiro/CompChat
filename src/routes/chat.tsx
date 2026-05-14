@@ -512,7 +512,7 @@ function ChatPage() {
             return (
               <div
                 key={c.id}
-                className={`group flex items-start gap-3 rounded-lg px-2.5 py-2.5 cursor-pointer transition-colors min-w-0 ${
+                className={`group flex items-center gap-3 rounded-lg px-2.5 py-2.5 cursor-pointer transition-colors min-w-0 ${
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "hover:bg-sidebar-accent/60 text-sidebar-foreground"
@@ -527,29 +527,17 @@ function ChatPage() {
                     {getChatInitials(displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2 min-w-0">
-                    <p className="font-semibold text-sm truncate min-w-0 flex-1">{displayName}</p>
-                    <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
-                      {formatChatTime(c.last_message_at ?? c.updated_at)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
-                    <p className="text-xs text-muted-foreground truncate min-w-0 flex-1">
-                      {c.last_message ? c.last_message.replace(/\s+/g, " ").trim() : "No messages yet"}
-                    </p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPendingDelete(c);
-                      }}
-                      className="shrink-0 p-1.5 -mr-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                      aria-label="Delete chat"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
+                <p className="flex-1 min-w-0 font-semibold text-sm truncate">{displayName}</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(c);
+                  }}
+                  className="shrink-0 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  aria-label="Delete chat"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })}
