@@ -972,12 +972,36 @@ function MessageBubble({
             <button
               type="button"
               onClick={onEditStart}
-              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1"
+              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1 shrink-0"
               aria-label="Edit message"
               disabled={disabled}
             >
               <Pencil className="h-3.5 w-3.5" />
               <span>Edit</span>
+            </button>
+          )}
+          {!isUser && onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Retry response"
+              disabled={disabled}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Retry</span>
+            </button>
+          )}
+          {!isUser && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-0.5 hover:text-destructive rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Delete message"
+              disabled={disabled}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
             </button>
           )}
         </div>
