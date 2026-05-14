@@ -972,6 +972,18 @@ function MessageBubble({
               <span>Edit</span>
             </button>
           )}
+          {isUser && !isEditing && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-0.5 hover:text-destructive rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Delete message"
+              disabled={disabled}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
+            </button>
+          )}
           {!isUser && onRetry && (
             <button
               type="button"
