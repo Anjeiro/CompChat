@@ -415,16 +415,21 @@ function ChatPage() {
   const confirmDeleteMessage = async () => {
     if (!pendingDeleteMsg) return;
     const ids = collectDescendantIds(pendingDeleteMsg.id);
+    const wasRoot = pendingDeleteMsg.parent_id === null;
     setPendingDeleteMsg(null);
     const { error } = await supabase.from("messages").delete().in("id", ids);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setAllMessages((prev) => prev.filter((m) => !ids.includes(m.id)));
+    const remaining = allMessages.filter((m) => !ids.includes(m.id));
+    setAllMessages(remaining);
     toast.success(
       ids.length > 1 ? `Deleted ${ids.length} messages` : "Message deleted",
     );
+    if (wasRoot || remaining.length === 0) {
+      startNewChat();
+    }
     refreshChats();
   };
 
@@ -512,7 +517,7 @@ function ChatPage() {
             return (
               <div
                 key={c.id}
-                className={`group flex items-start gap-3 rounded-lg px-2.5 py-2.5 cursor-pointer transition-colors min-w-0 ${
+                className={`group flex items-center gap-3 rounded-lg px-2.5 py-2.5 cursor-pointer transition-colors min-w-0 ${
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "hover:bg-sidebar-accent/60 text-sidebar-foreground"
@@ -527,29 +532,17 @@ function ChatPage() {
                     {getChatInitials(displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2 min-w-0">
-                    <p className="font-semibold text-sm truncate min-w-0 flex-1">{displayName}</p>
-                    <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
-                      {formatChatTime(c.last_message_at ?? c.updated_at)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mt-0.5 min-w-0">
-                    <p className="text-xs text-muted-foreground truncate min-w-0 flex-1">
-                      {c.last_message ? c.last_message.replace(/\s+/g, " ").trim() : "No messages yet"}
-                    </p>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPendingDelete(c);
-                      }}
-                      className="shrink-0 p-1.5 -mr-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                      aria-label="Delete chat"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
+                <p className="flex-1 min-w-0 font-semibold text-sm truncate">{displayName}</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(c);
+                  }}
+                  className="shrink-0 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  aria-label="Delete chat"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             );
           })}
@@ -671,7 +664,7 @@ function ChatPage() {
                   }}
                   onEditSave={() => handleEditSave(m)}
                   onRetry={m.role === "assistant" ? () => handleRetryAssistant(m) : undefined}
-                  onDelete={m.role === "assistant" ? () => setPendingDeleteMsg(m) : undefined}
+                  onDelete={() => setPendingDeleteMsg(m)}
                   disabled={streaming}
                 />
               );
@@ -758,10 +751,9 @@ function ChatPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+            <AlertDialogTitle>Delete message and all subsequent replies?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this response and every message that follows it
-              in this branch. This action cannot be undone.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -978,6 +970,18 @@ function MessageBubble({
             >
               <Pencil className="h-3.5 w-3.5" />
               <span>Edit</span>
+            </button>
+          )}
+          {isUser && !isEditing && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-0.5 hover:text-destructive rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Delete message"
+              disabled={disabled}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
             </button>
           )}
           {!isUser && onRetry && (
