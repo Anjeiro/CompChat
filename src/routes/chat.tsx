@@ -750,6 +750,32 @@ function ChatPage() {
         />
       )}
 
+      <AlertDialog
+        open={!!pendingDeleteMsg}
+        onOpenChange={(o) => {
+          if (!o) setPendingDeleteMsg(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this response and every message that follows it
+              in this branch. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteMessage}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <DeleteChatDialog
         open={!!pendingDelete}
         onOpenChange={(o) => {
