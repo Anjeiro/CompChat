@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ChatSidebar } from "@/components/ChatSidebar";
 import {
   Select,
   SelectContent,
@@ -11,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import { toast } from "sonner";
 import { AVAILABLE_MODELS, ModelId } from "@/lib/models";
 import { PersonalizeDialog, Personalization } from "@/components/PersonalizeDialog";
@@ -21,19 +21,13 @@ import { DeleteChatDialog } from "@/components/DeleteChatDialog";
 import { ApiKeySetupDialog } from "@/components/ApiKeySetupDialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
-  Plus,
   Send,
-  Settings as SettingsIcon,
-  LogOut,
   Sparkles,
-  MessageSquare,
-  Trash2,
   Pencil,
   ChevronLeft,
   ChevronRight,
   Check,
   X,
-  Menu,
 } from "lucide-react";
 
 interface Chat {
@@ -199,15 +193,76 @@ function ChatPage() {
     setBranchSelection({});
   };
 
-  const deleteChat = async (id: string) => {
-    const { error } = await supabase.from("chats").delete().eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      return;
+ const renameChat = async (id: string, rawTitle: string): Promise<boolean> => {
+  if (!user) return false;
+
+  const title = normalizeChatTitle(rawTitle);
+
+  if (!title) {
+    toast.error("Chat title cannot be empty");
+    return false;
+  }
+
+  const previousChats = chats;
+
+  setChats((prev) =>
+    prev.map((chat) =>
+      chat.id === id
+        ? {
+            ...chat,
+            title,
+          }
+        : chat,
+    ),
+  );
+
+  const { error } = await supabase
+    .from("chats")
+    .update({ title })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    setChats(previousChats);
+    toast.error(error.message);
+    return false;
+  }
+
+  toast.success("Chat renamed");
+  return true;
+};
+
+const deleteChat = async (id: string): Promise<void> => {
+  if (!user) return;
+
+  const previousChats = chats;
+  const deletedWasActive = activeChatId === id;
+
+  setChats((prev) => prev.filter((chat) => chat.id !== id));
+
+  if (deletedWasActive) {
+    startNewChat();
+  }
+
+  const { error } = await supabase
+    .from("chats")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    setChats(previousChats);
+
+    if (deletedWasActive) {
+      setActiveChatId(id);
     }
-    if (activeChatId === id) startNewChat();
-    refreshChats();
-  };
+
+    toast.error(error.message);
+    return;
+  }
+
+  toast.success("Chat deleted");
+};
 
   const sendMessage = async (e?: FormEvent) => {
     e?.preventDefault();
