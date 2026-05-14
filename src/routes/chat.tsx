@@ -664,7 +664,7 @@ function ChatPage() {
                   }}
                   onEditSave={() => handleEditSave(m)}
                   onRetry={m.role === "assistant" ? () => handleRetryAssistant(m) : undefined}
-                  onDelete={m.role === "assistant" ? () => setPendingDeleteMsg(m) : undefined}
+                  onDelete={() => setPendingDeleteMsg(m)}
                   disabled={streaming}
                 />
               );
