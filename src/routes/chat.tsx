@@ -888,6 +888,8 @@ function MessageBubble({
   onEditChange,
   onEditCancel,
   onEditSave,
+  onRetry,
+  onDelete,
   disabled,
 }: BubbleProps) {
   const isUser = message.role === "user";
