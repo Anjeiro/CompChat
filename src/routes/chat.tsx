@@ -694,7 +694,19 @@ function ChatPage() {
           </div>
         </div>
 
-        <form onSubmit={sendMessage} className="border-t p-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const lastMsg = activePath[activePath.length - 1];
+            const isUserLast = lastMsg?.role === "user";
+            if (input.trim()) {
+              sendMessage();
+            } else if (isUserLast && !streaming) {
+              handleRetryFromUser(lastMsg);
+            }
+          }}
+          className="border-t p-4"
+        >
           <div className="max-w-3xl mx-auto flex gap-2 items-end">
             <Textarea
               value={input}
@@ -705,9 +717,23 @@ function ChatPage() {
               className="flex-1 min-h-[48px] max-h-48 resize-none"
               disabled={streaming}
             />
-            <Button type="submit" size="icon" className="h-12 w-12 shrink-0" disabled={streaming || !input.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
+            {(() => {
+              const lastMsg = activePath[activePath.length - 1];
+              const isUserLast = lastMsg?.role === "user";
+              const showRetry = !input.trim() && isUserLast;
+              const isDisabled = streaming || (!input.trim() && !isUserLast);
+              return (
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="h-12 w-12 shrink-0"
+                  disabled={isDisabled}
+                  aria-label={showRetry ? "Retry last response" : "Send message"}
+                >
+                  {showRetry ? <RotateCcw className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                </Button>
+              );
+            })()}
           </div>
         </form>
       </main>
