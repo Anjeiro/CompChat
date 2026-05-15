@@ -24,7 +24,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      loca                                          lStorage.setItem('theme', 'light');
     }
   }, [theme]);
 
