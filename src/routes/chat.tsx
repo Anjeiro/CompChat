@@ -60,7 +60,7 @@ import {
   Search,
   Send,
   SlidersHorizontal,
-  Sparkles,
+  MessageSquareText,
   Trash2,
   X,
 } from "lucide-react";
@@ -643,7 +643,7 @@ function ChatPage() {
 
     const titleSource = personalization.custom_model_name?.trim() || prompt;
     const title =
-      titleSource.length > 5 ? `${titleSource.slice(0, 5)}…` : titleSource;
+      titleSource.length > 1 ? `${titleSource.slice(0, 1)}…` : titleSource;
 
     const { data: newChat, error } = await supabase
       .from("chats")
@@ -694,7 +694,7 @@ function ChatPage() {
       configuration.custom_model_name?.trim() || "New conversation";
 
     const title =
-      titleSource.length > 5 ? `${titleSource.slice(0, 5)}…` : titleSource;
+      titleSource.length > 1 ? `${titleSource.slice(0, 1)}…` : titleSource;
 
     const { data: newChat, error } = await supabase
       .from("chats")
@@ -1187,7 +1187,7 @@ function ChatPage() {
 
           <div className="md:hidden">
             <Link to="/" className="font-semibold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <MessageSquareText className="h-4 w-4 text-primary" />
               CompChat
             </Link>
           </div>
@@ -1590,7 +1590,7 @@ function NewChatPicker({ onChoosePersona, onCancel }: NewChatPickerProps) {
       <div className="rounded-[2rem] border border-white/70 bg-background/55 p-5 shadow-sm backdrop-blur-md md:p-7">
         <div className="text-center mb-8">
           <div className="mx-auto h-16 w-16 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-glow mb-5">
-            <Sparkles className="h-8 w-8 text-primary-foreground" />
+            <MessageSquareText className="h-8 w-8 text-primary-foreground" />
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight">
