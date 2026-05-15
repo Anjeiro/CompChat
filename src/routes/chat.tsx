@@ -379,7 +379,11 @@ function ChatPage() {
     const prompt = pendingPrompt;
     setPendingPrompt(null);
 
-    const title = prompt.length > 50 ? `${prompt.slice(0, 50)}…` : prompt;
+  const titleSource =
+  personalization.custom_model_name?.trim() || prompt;
+
+  const title =
+  titleSource.length > 50 ? `${titleSource.slice(0, 50)}…` : titleSource;
 
     const { data: newChat, error } = await supabase
       .from("chats")

@@ -7,6 +7,14 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
@@ -64,22 +72,37 @@ export function ChatSidebar({
 }: ChatSidebarProps) {
   const [peekChatId, setPeekChatId] = useState<string | null>(null);
   const [busyChatId, setBusyChatId] = useState<string | null>(null);
+  const [chatPendingDelete, setChatPendingDelete] =
+    useState<SidebarChat | null>(null);
 
   const handleConfigure = (chat: SidebarChat) => {
     setPeekChatId(null);
     onConfigureChat?.(chat);
   };
 
-  const handleDelete = async (chatId: string) => {
+  const requestDelete = (chat: SidebarChat) => {
     setPeekChatId(null);
+    setChatPendingDelete(chat);
+  };
+
+  const confirmDelete = async () => {
+    if (!chatPendingDelete) return;
+
+    const chatId = chatPendingDelete.id;
+
     setBusyChatId(chatId);
 
     try {
       await onDeleteChat(chatId);
+      setChatPendingDelete(null);
     } finally {
       setBusyChatId(null);
     }
   };
+
+  const pendingDeleteTitle = chatPendingDelete
+    ? getDisplayTitle(chatPendingDelete)
+    : "this chat";
 
   return (
     <aside className="hidden md:flex w-72 flex-col bg-sidebar border-r border-sidebar-border">
@@ -188,7 +211,7 @@ export function ChatSidebar({
 
                   <button
                     type="button"
-                    onClick={() => handleDelete(chat.id)}
+                    onClick={() => requestDelete(chat)}
                     className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                     aria-label={`Delete ${displayTitle}`}
                     title="Delete chat"
@@ -249,21 +272,69 @@ export function ChatSidebar({
           Sign out
         </Button>
       </div>
+
+      <Dialog
+        open={!!chatPendingDelete}
+        onOpenChange={(open: boolean) => {
+          if (!open) {
+            setChatPendingDelete(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete chat?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete{" "}
+              <span className="font-medium text-foreground">
+                {pendingDeleteTitle}
+              </span>
+              . This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setChatPendingDelete(null)}
+              disabled={!!busyChatId}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={!!busyChatId}
+            >
+              {busyChatId ? "Deleting..." : "Delete chat"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 }
 
 function getDisplayTitle(chat: SidebarChat): string {
-  const rawTitle = (chat.name ?? chat.title ?? "").trim().replace(/\s+/g, " ");
+  const botName = chat.custom_model_name?.trim().replace(/\s+/g, " ");
+
+  if (botName) {
+    return botName;
+  }
+
+  const explicitName = chat.name?.trim().replace(/\s+/g, " ");
+
+  if (explicitName && /[\p{L}\p{N}]/u.test(explicitName)) {
+    return explicitName;
+  }
+
+  const rawTitle = chat.title?.trim().replace(/\s+/g, " ");
 
   if (rawTitle && /[\p{L}\p{N}]/u.test(rawTitle)) {
     return rawTitle;
-  }
-
-  const botName = chat.custom_model_name?.trim();
-
-  if (botName) {
-    return `${botName} chat`;
   }
 
   return "Untitled chat";
