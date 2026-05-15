@@ -27,10 +27,12 @@ import {
 } from "@/components/PersonalizeDialog";
 import { MarkdownMessage } from "@/components/MarkdownMessage";
 import { ApiKeySetupDialog } from "@/components/ApiKeySetupDialog";
+
 import {
   ConfigureChatDialog,
   type ChatConfiguration,
-} from "@/components/ConfigureChatDialog";
+} from "../components/ConfigureChatDialog";
+
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Check,
@@ -135,7 +137,9 @@ function ChatPage() {
 
     const { data: chatList, error } = await supabase
       .from("chats")
-      .select("id, title, updated_at, preset_id, custom_model_name, custom_personality, custom_background, custom_tone")
+      .select(
+        "id, title, updated_at, preset_id, custom_model_name, custom_personality, custom_background, custom_tone",
+      )
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -388,7 +392,9 @@ function ChatPage() {
         custom_background: personalization.custom_background,
         custom_tone: personalization.custom_tone,
       })
-      .select("id, title, updated_at, custom_model_name")
+      .select(
+        "id, title, updated_at, preset_id, custom_model_name, custom_personality, custom_background, custom_tone",
+      )
       .single();
 
     if (error || !newChat) {
@@ -626,58 +632,63 @@ function ChatPage() {
     setActiveChatId(id);
     setMobileSidebarOpen(false);
   };
-  
-const handleConfigureChat = (chat: { id: string }) => {
-  const selectedChat = chats.find((item) => item.id === chat.id);
 
-  if (!selectedChat) {
-    toast.error("Could not load chat settings");
-    return;
-  }
+  const handleConfigureChat = (chat: { id: string }) => {
+    const selectedChat = chats.find((item) => item.id === chat.id);
 
-  setConfiguringChat(selectedChat);
-  setConfigureOpen(true);
-  setMobileSidebarOpen(false);
-};
+    if (!selectedChat) {
+      toast.error("Could not load chat settings");
+      return;
+    }
 
-const handleSaveChatConfiguration = async (
-  configuration: ChatConfiguration,
-): Promise<boolean> => {
-  if (!user || !configuringChat) {
-    toast.error("Could not load chat settings");
-    return false;
-  }
+    setConfiguringChat(selectedChat);
+    setConfigureOpen(true);
+    setMobileSidebarOpen(false);
+  };
 
-  const { data, error } = await supabase
-    .from("chats")
-    .update({
-      preset_id: configuration.preset_id,
-      custom_model_name: configuration.custom_model_name,
-      custom_personality: configuration.custom_personality,
-      custom_background: configuration.custom_background,
-      custom_tone: configuration.custom_tone,
-    })
-    .eq("id", configuringChat.id)
-    .eq("user_id", user.id)
-    .select(
-      "id, title, updated_at, preset_id, custom_model_name, custom_personality, custom_background, custom_tone",
-    )
-    .single();
+  const handleSaveChatConfiguration = async (
+    configuration: ChatConfiguration,
+  ): Promise<boolean> => {
+    if (!user || !configuringChat) {
+      toast.error("Could not load chat settings");
+      return false;
+    }
 
-  if (error || !data) {
-    toast.error(error?.message ?? "Could not update chat personality");
-    return false;
-  }
+    const { data, error } = await supabase
+      .from("chats")
+      .update({
+        preset_id: configuration.preset_id,
+        custom_model_name: configuration.custom_model_name,
+        custom_personality: configuration.custom_personality,
+        custom_background: configuration.custom_background,
+        custom_tone: configuration.custom_tone,
+      })
+      .eq("id", configuringChat.id)
+      .eq("user_id", user.id)
+      .select(
+        "id, title, updated_at, preset_id, custom_model_name, custom_personality, custom_background, custom_tone",
+      )
+      .single();
 
-  setChats((previous) =>
-    previous.map((chat) =>
-      chat.id === configuringChat.id ? { ...chat, ...data } : chat,
-    ),
-  );
+    if (error || !data) {
+      toast.error(error?.message ?? "Could not update chat personality");
+      return false;
+    }
 
-  toast.success("Chat personality updated");
-  return true;
-};
+    setChats((previous) =>
+      previous.map((chat) =>
+        chat.id === configuringChat.id
+          ? {
+              ...chat,
+              ...data,
+            }
+          : chat,
+      ),
+    );
+
+    toast.success("Chat personality updated");
+    return true;
+  };
 
   if (loading || !session) {
     return (
@@ -689,19 +700,19 @@ const handleSaveChatConfiguration = async (
 
   const initials = (profileName || user?.email || "U").slice(0, 2).toUpperCase();
 
-const sidebarProps = {
-  chats,
-  activeChatId,
-  initials,
-  profileName,
-  email: user?.email,
-  onNewChat: startNewChat,
-  onSelectChat: handleSelectChat,
-  onRenameChat: renameChat,
-  onConfigureChat: handleConfigureChat,
-  onDeleteChat: deleteChat,
-  onLogout: handleLogout,
-};
+  const sidebarProps = {
+    chats,
+    activeChatId,
+    initials,
+    profileName,
+    email: user?.email,
+    onNewChat: startNewChat,
+    onSelectChat: handleSelectChat,
+    onRenameChat: renameChat,
+    onConfigureChat: handleConfigureChat,
+    onDeleteChat: deleteChat,
+    onLogout: handleLogout,
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -736,7 +747,10 @@ const sidebarProps = {
           </div>
 
           <div className="flex-1 flex items-center justify-end md:justify-start min-w-0">
-            <Select value={model} onValueChange={(value) => setModel(value as ModelId)}>
+            <Select
+              value={model}
+              onValueChange={(value) => setModel(value as ModelId)}
+            >
               <SelectTrigger className="w-[200px] md:w-[260px]">
                 <SelectValue />
               </SelectTrigger>
@@ -769,7 +783,8 @@ const sidebarProps = {
                 </div>
 
                 <h2 className="text-3xl font-bold tracking-tight">
-                  Welcome back{profileName ? `, ${profileName.split(" ")[0]}` : ""}!
+                  Welcome back
+                  {profileName ? `, ${profileName.split(" ")[0]}` : ""}!
                 </h2>
 
                 <p className="text-muted-foreground mt-2 max-w-md">
@@ -852,10 +867,11 @@ const sidebarProps = {
           </div>
         </form>
       </main>
-{user && (
+
+   {user && (
   <ConfigureChatDialog
     open={configureOpen}
-    onOpenChange={(open) => {
+    onOpenChange={(open: boolean) => {
       setConfigureOpen(open);
 
       if (!open) {
@@ -866,6 +882,7 @@ const sidebarProps = {
     onSave={handleSaveChatConfiguration}
   />
 )}
+
       {user && (
         <PersonalizeDialog
           open={personalizeOpen}
@@ -960,7 +977,9 @@ function MessageBubble({
   const showSwitcher = siblingCount > 1 && !streaming;
 
   return (
-    <div className={`flex flex-col ${isUser ? "items-end" : "items-start"} gap-1.5`}>
+    <div
+      className={`flex flex-col ${isUser ? "items-end" : "items-start"} gap-1.5`}
+    >
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-soft ${
           isUser

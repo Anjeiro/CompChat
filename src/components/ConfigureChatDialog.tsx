@@ -21,15 +21,21 @@ export interface ChatConfiguration {
   custom_tone: string | null;
 }
 
+interface ConfigurableChat {
+  id: string;
+  title?: string | null;
+
+  preset_id?: string | null;
+  custom_model_name?: string | null;
+  custom_personality?: string | null;
+  custom_background?: string | null;
+  custom_tone?: string | null;
+}
+
 interface ConfigureChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  chat:
-    | (ChatConfiguration & {
-        id: string;
-        title?: string | null;
-      })
-    | null;
+  chat: ConfigurableChat | null;
   onSave: (configuration: ChatConfiguration) => Promise<boolean>;
 }
 

@@ -44,6 +44,7 @@ interface ChatSidebarProps {
   email?: string | null;
   onNewChat: () => void;
   onSelectChat: (id: string) => void;
+  onRenameChat?: (id: string, title: string) => Promise<boolean>;
   onConfigureChat?: (chat: SidebarChat) => void;
   onDeleteChat: (id: string) => Promise<void>;
   onLogout: () => void;
@@ -66,13 +67,7 @@ export function ChatSidebar({
 
   const handleConfigure = (chat: SidebarChat) => {
     setPeekChatId(null);
-
-    if (onConfigureChat) {
-      onConfigureChat(chat);
-      return;
-    }
-
-    console.info("Configure chat:", chat.id);
+    onConfigureChat?.(chat);
   };
 
   const handleDelete = async (chatId: string) => {
