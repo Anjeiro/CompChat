@@ -643,7 +643,7 @@ function ChatPage() {
 
     const titleSource = personalization.custom_model_name?.trim() || prompt;
     const title =
-      titleSource.length > 50 ? `${titleSource.slice(0, 50)}…` : titleSource;
+      titleSource.length > 5 ? `${titleSource.slice(0, 5)}…` : titleSource;
 
     const { data: newChat, error } = await supabase
       .from("chats")
@@ -694,7 +694,7 @@ function ChatPage() {
       configuration.custom_model_name?.trim() || "New conversation";
 
     const title =
-      titleSource.length > 50 ? `${titleSource.slice(0, 50)}…` : titleSource;
+      titleSource.length > 5 ? `${titleSource.slice(0, 5)}…` : titleSource;
 
     const { data: newChat, error } = await supabase
       .from("chats")
