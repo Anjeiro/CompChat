@@ -44,6 +44,16 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Chat {
   id: string;
@@ -848,7 +858,19 @@ function ChatPage() {
           </div>
         </div>
 
-        <form onSubmit={sendMessage} className="border-t p-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const lastMsg = activePath[activePath.length - 1];
+            const isUserLast = lastMsg?.role === "user";
+            if (input.trim()) {
+              sendMessage();
+            } else if (isUserLast && !streaming) {
+              handleRetryFromUser(lastMsg);
+            }
+          }}
+          className="border-t p-4"
+        >
           <div className="max-w-3xl mx-auto flex gap-2 items-end">
             <Textarea
               value={input}
@@ -959,6 +981,8 @@ interface BubbleProps {
   onEditChange?: (value: string) => void;
   onEditCancel?: () => void;
   onEditSave?: () => void;
+  onRetry?: () => void;
+  onDelete?: () => void;
   disabled?: boolean;
 }
 
@@ -975,6 +999,8 @@ function MessageBubble({
   onEditChange,
   onEditCancel,
   onEditSave,
+  onRetry,
+  onDelete,
   disabled,
 }: BubbleProps) {
   const isUser = message.role === "user";
@@ -1071,12 +1097,48 @@ function MessageBubble({
             <button
               type="button"
               onClick={onEditStart}
-              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1"
+              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1 shrink-0"
               aria-label="Edit message"
               disabled={disabled}
             >
               <Pencil className="h-3.5 w-3.5" />
               <span>Edit</span>
+            </button>
+          )}
+          {isUser && !isEditing && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-0.5 hover:text-destructive rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Delete message"
+              disabled={disabled}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
+            </button>
+          )}
+          {!isUser && onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="p-0.5 hover:text-foreground rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Retry response"
+              disabled={disabled}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Retry</span>
+            </button>
+          )}
+          {!isUser && onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="p-0.5 hover:text-destructive rounded inline-flex items-center gap-1 shrink-0"
+              aria-label="Delete message"
+              disabled={disabled}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
             </button>
           )}
         </div>
