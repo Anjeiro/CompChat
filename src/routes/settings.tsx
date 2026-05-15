@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -7,7 +7,6 @@ import { deleteOwnAccount } from "@/lib/account.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog,
@@ -26,7 +25,6 @@ import {
   EyeOff,
   Mail,
   Lock,
-  Sparkles,
   Trash2,
   AlertTriangle,
 } from "lucide-react";
@@ -60,11 +58,6 @@ function SettingsPage() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
 
-  // Personalization
-  const [globalPersona, setGlobalPersona] = useState("");
-  const [globalBackground, setGlobalBackground] = useState("");
-  const [savingPersonalization, setSavingPersonalization] = useState(false);
-
   // Delete account
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -81,15 +74,13 @@ function SettingsPage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, openrouter_api_key, global_persona, global_background")
+        .select("full_name, openrouter_api_key")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
       if (data) {
         setFullName(data.full_name ?? "");
         setHasKey(!!data.openrouter_api_key);
-        setGlobalPersona(data.global_persona ?? "");
-        setGlobalBackground(data.global_background ?? "");
       }
       setFetching(false);
     })();
@@ -136,22 +127,6 @@ function SettingsPage() {
     if (error) return toast.error(error.message);
     toast.success("Password updated");
     setNewPassword("");
-  };
-
-  const handleSavePersonalization = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setSavingPersonalization(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        global_persona: globalPersona.trim() || null,
-        global_background: globalBackground.trim() || null,
-      })
-      .eq("id", user.id);
-    setSavingPersonalization(false);
-    if (error) return toast.error(error.message);
-    toast.success("Personalization saved");
   };
 
   const handleDeleteAccount = async () => {
@@ -299,45 +274,6 @@ function SettingsPage() {
               </div>
               <Button type="submit" variant="secondary" disabled={savingPassword || !newPassword}>
                 {savingPassword ? "Updating…" : "Update password"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Personalization */}
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" /> Personalization
-            </CardTitle>
-            <CardDescription>
-              Defaults applied to new chats. Leave empty for none.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSavePersonalization} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="persona">Global persona</Label>
-                <Textarea
-                  id="persona"
-                  value={globalPersona}
-                  onChange={(e) => setGlobalPersona(e.target.value)}
-                  placeholder="None"
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="background">Global background</Label>
-                <Textarea
-                  id="background"
-                  value={globalBackground}
-                  onChange={(e) => setGlobalBackground(e.target.value)}
-                  placeholder="None"
-                  rows={3}
-                />
-              </div>
-              <Button type="submit" disabled={savingPersonalization}>
-                {savingPersonalization ? "Saving…" : "Save personalization"}
               </Button>
             </form>
           </CardContent>
