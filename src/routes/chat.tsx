@@ -60,7 +60,6 @@ import {
   Search,
   Send,
   SlidersHorizontal,
-  MessageSquareText,
   Trash2,
   X,
 } from "lucide-react";
