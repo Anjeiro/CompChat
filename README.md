@@ -167,7 +167,7 @@ AI coding tools were used during development to assist with boilerplate code gen
 |---|---|
 | Edward Angelo Banguis | Leader |
 | Miguel Cecelio Z. Elican | Frontend Developer |
-| Loraine Mae Piagola | Backend Developer |
+| Loraine Mae B. Piagola | Backend Developer |
 | Marby E. Egnalig | AI Developer |
 | Denver Jay B. Palabon | UI/UX Designer |
 | Cristian Dave T. Gulay | QA / Documentation |
